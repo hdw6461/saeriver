@@ -1,0 +1,386 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  ChevronLeft, ChevronRight, Plus, Trash2, Edit3, 
+  Save, Lock, Layout, User, Heart, Eye, 
+  Calendar, BookOpen, Settings 
+} from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+
+const App = () => {
+  // 2013년 배경 데이터 초기값
+  const initialPosts = [
+    {
+      id: 1,
+      title: "제 1화: 붉은 커튼 뒤의 고백",
+      date: "2013.04.12",
+      bodyContent: "### [몸글]\n\n오늘도 학교 수업이 끝나고 교문을 나설 때, 아이들이 내 손을 잡으며 웃어주었다.\n하지만 내 손목 안쪽에는 어젯밤의 흔적이 욱신거리고 있었다.\n\n장로님인 아버지 앞에서는 정숙한 딸로, 아이들 앞에서는 단아한 선생님으로...\n누구에게도 말할 수 없는 나의 진실이 이 비밀스러운 공간에서만 숨을 쉰다.\n\n> \"선생님, 오늘도 참 예쁘세요.\"\n\n아이들의 순수한 찬사가 가슴을 찔러온다. 그럴수록 나는 더 깊은 굴복을 원하게 된다.",
+      cafeComments: "### [카페 댓글]\n\n* **나비**: 세미님 글 기다렸어요. 그 이중적인 느낌이 너무 절절해요.\n* **DeepBlue**: 저도 대구인데, 언제 한 번 정모해요. 우리끼리만 아는 암호로.\n* **여왕**: 순종의 끝에는 무엇이 있을까요?",
+      churchComments: "### [대구서광교회 댓글]\n\n* **김집사**: 선생님 오늘 성가대 찬양 너무 은혜로웠어요!\n* **박권사**: 세미 샘은 어쩜 그렇게 참해? 우리 아들만 좀 어렸어도...\n* **고등부 학생**: 쌤! 오늘 공과 공부 때 너무 예쁘셨어요~"
+    }
+  ];
+
+  const [posts, setPosts] = useState(() => {
+    const saved = localStorage.getItem('semi_secret_blog_v2');
+    return saved ? JSON.parse(saved) : initialPosts;
+  });
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editPost, setEditPost] = useState(posts[0]);
+  const [fade, setFade] = useState(true);
+
+  useEffect(() => {
+    localStorage.setItem('semi_secret_blog_v2', JSON.stringify(posts));
+  }, [posts]);
+
+  const triggerFade = (callback) => {
+    setFade(false);
+    setTimeout(() => {
+      callback();
+      setFade(true);
+    }, 300);
+  };
+
+  const handleNext = () => {
+    if (currentIndex < posts.length - 1) {
+      triggerFade(() => {
+        setCurrentIndex(currentIndex + 1);
+        setEditPost(posts[currentIndex + 1]);
+      });
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      triggerFade(() => {
+        setCurrentIndex(currentIndex - 1);
+        setEditPost(posts[currentIndex - 1]);
+      });
+    }
+  };
+
+  const handleAddNew = () => {
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`;
+    const newPost = {
+      id: Date.now(),
+      title: `제 ${posts.length + 1}화: 제목 없음`,
+      date: dateStr,
+      bodyContent: "### [몸글]\n\n내용을 입력하세요 (마크다운 지원)",
+      cafeComments: "### [카페 댓글]\n\n댓글 내용을 입력하세요",
+      churchComments: "### [대구서광교회 댓글]\n\n교회 식구들의 댓글을 입력하세요"
+    };
+    const newPosts = [...posts, newPost];
+    setPosts(newPosts);
+    setCurrentIndex(newPosts.length - 1);
+    setEditPost(newPost);
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    const updatedPosts = [...posts];
+    updatedPosts[currentIndex] = editPost;
+    setPosts(updatedPosts);
+    setIsEditing(false);
+  };
+
+  const handleDelete = () => {
+    if (posts.length === 1) return;
+    const newPosts = posts.filter((_, i) => i !== currentIndex);
+    setPosts(newPosts);
+    const nextIdx = Math.max(0, currentIndex - 1);
+    setCurrentIndex(nextIdx);
+    setEditPost(newPosts[nextIdx]);
+  };
+
+  const currentPost = posts[currentIndex] || posts[0];
+
+  return (
+    <div className="min-h-screen bg-[#1a1a1a] text-[#d4d4d4] font-sans selection:bg-[#a68d7a] selection:text-white">
+      {/* 2013-style Grain Texture Overlay */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-50 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+
+      {/* Header Area */}
+      <header className="max-w-6xl mx-auto pt-10 pb-6 px-6 flex justify-between items-center border-b border-[#333]">
+        <div className="group cursor-default">
+          <div className="flex items-center gap-3">
+            <div className="bg-[#a68d7a] p-2 rounded-lg shadow-[0_0_15px_rgba(166,141,122,0.3)]">
+              <Lock size={28} className="text-[#1a1a1a]" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-serif font-bold tracking-tighter text-white group-hover:text-[#a68d7a] transition-colors">
+                익명의 메조히스트 모임
+              </h1>
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-[#666] mt-1">
+                <span>Secret Archive</span>
+                <span className="w-1 h-1 bg-[#444] rounded-full"></span>
+                <span>Est. 2013</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-sm font-serif font-bold text-[#a68d7a]">Son Semi (1983)</p>
+            <p className="text-[10px] text-[#555] mt-0.5">대구 계성초등학교 교사 / 서광교회</p>
+          </div>
+          <div className="w-12 h-12 rounded-full border-2 border-[#333] overflow-hidden bg-[#252525] flex items-center justify-center">
+            <User size={24} className="text-[#444]" />
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto py-8 px-4 md:px-6">
+        {/* Navigation Control Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-[#252525] border border-[#333] p-4 rounded-xl shadow-2xl">
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handlePrev} 
+              disabled={currentIndex === 0 || isEditing}
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-[#1a1a1a] hover:bg-[#333] border border-[#444] disabled:opacity-20 transition-all active:scale-95"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="px-4 py-1.5 bg-[#1a1a1a] rounded-full border border-[#444] text-xs font-mono tracking-widest text-[#a68d7a]">
+              POST {currentIndex + 1} / {posts.length}
+            </div>
+            <button 
+              onClick={handleNext} 
+              disabled={currentIndex === posts.length - 1 || isEditing}
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-[#1a1a1a] hover:bg-[#333] border border-[#444] disabled:opacity-20 transition-all active:scale-95"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isEditing ? (
+              <>
+                <button onClick={handleSave} className="flex items-center gap-2 bg-[#a68d7a] text-[#1a1a1a] px-5 py-2 rounded-full text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-[#a68d7a33]">
+                  <Save size={16} /> SAVE
+                </button>
+                <button onClick={() => setIsEditing(false)} className="flex items-center gap-2 bg-[#333] text-white px-5 py-2 rounded-full text-xs font-bold hover:bg-[#444] transition-all">
+                  CANCEL
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={handleAddNew} className="flex items-center gap-2 bg-[#333] text-white px-5 py-2 rounded-full text-xs font-bold hover:bg-[#444] transition-all border border-[#444]">
+                  <Plus size={16} /> NEW
+                </button>
+                <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-[#333] text-white px-5 py-2 rounded-full text-xs font-bold hover:bg-[#444] transition-all border border-[#444]">
+                  <Edit3 size={16} /> EDIT
+                </button>
+                <button onClick={handleDelete} className="flex items-center justify-center w-10 h-10 text-[#663333] hover:text-red-500 hover:bg-red-950/30 rounded-full transition-all">
+                  <Trash2 size={18} />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className={`transition-all duration-300 transform ${fade ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          {isEditing ? (
+            /* EDITOR VIEW */
+            <div className="grid grid-cols-1 gap-6 bg-[#222] p-8 rounded-2xl border border-[#333]">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-bold text-[#666] uppercase mb-1 block">Series Title</label>
+                  <input 
+                    type="text" 
+                    value={editPost.title} 
+                    onChange={(e) => setEditPost({...editPost, title: e.target.value})}
+                    className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg p-4 text-xl font-serif text-white focus:outline-none focus:border-[#a68d7a] transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-[#666] uppercase mb-1 block">Body Content [몸글]</label>
+                  <textarea 
+                    rows={12}
+                    value={editPost.bodyContent}
+                    onChange={(e) => setEditPost({...editPost, bodyContent: e.target.value})}
+                    className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg p-4 font-mono text-sm text-[#bbb] focus:outline-none focus:border-[#a68d7a] transition-colors"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-[#666] uppercase mb-1 block">Cafe Comments [카페 댓글]</label>
+                    <textarea 
+                      rows={8}
+                      value={editPost.cafeComments}
+                      onChange={(e) => setEditPost({...editPost, cafeComments: e.target.value})}
+                      className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg p-4 font-mono text-xs text-[#bbb] focus:outline-none focus:border-[#a68d7a] transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-[#666] uppercase mb-1 block">Church Comments [교회 댓글]</label>
+                    <textarea 
+                      rows={8}
+                      value={editPost.churchComments}
+                      onChange={(e) => setEditPost({...editPost, churchComments: e.target.value})}
+                      className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg p-4 font-mono text-xs text-[#bbb] focus:outline-none focus:border-[#a68d7a] transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* DISPLAY VIEW */
+            <div className="space-y-6">
+              {/* Main Content Box */}
+              <div className="bg-[#222] rounded-2xl border border-[#333] overflow-hidden shadow-2xl">
+                <div className="p-8 border-b border-[#333] flex flex-wrap justify-between items-end gap-4 bg-gradient-to-r from-[#222] to-[#282828]">
+                  <div>
+                    <div className="flex items-center gap-2 text-[#a68d7a] mb-2">
+                      <Calendar size={14} />
+                      <span className="text-xs font-mono">{currentPost.date}</span>
+                    </div>
+                    <h2 className="text-3xl font-serif font-bold text-white tracking-tight leading-tight">
+                      {currentPost.title}
+                    </h2>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-1.5 text-[#555] text-xs">
+                      <Eye size={14} /> <span>{1983 + currentIndex * 27} Hits</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[#555] text-xs">
+                      <Heart size={14} /> <span>Private Post</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-8 md:p-12 prose prose-invert max-w-none">
+                  <div className="markdown-content text-lg font-serif leading-relaxed text-[#ccc]">
+                    <ReactMarkdown>{currentPost.bodyContent}</ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+
+              {/* Comments Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Cafe Side */}
+                <div className="bg-[#281e1e] border border-[#443333] rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Layout size={80} className="text-red-500" />
+                  </div>
+                  <div className="flex items-center gap-2 mb-6 text-red-400 font-bold tracking-widest text-xs uppercase">
+                    <BookOpen size={16} />
+                    <span>Secret Cafe Feedback</span>
+                  </div>
+                  <div className="prose prose-invert prose-sm text-[#bbaaaa] italic leading-loose">
+                    <ReactMarkdown>{currentPost.cafeComments}</ReactMarkdown>
+                  </div>
+                </div>
+
+                {/* Church Side */}
+                <div className="bg-[#1e2328] border border-[#333a44] rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <User size={80} className="text-blue-500" />
+                  </div>
+                  <div className="flex items-center gap-2 mb-6 text-blue-400 font-bold tracking-widest text-xs uppercase">
+                    <User size={16} />
+                    <span>Church Members Feedback</span>
+                  </div>
+                  <div className="prose prose-invert prose-sm text-[#aab3bb] leading-loose">
+                    <ReactMarkdown>{currentPost.churchComments}</ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+
+      <footer className="max-w-6xl mx-auto py-12 px-6 text-center border-t border-[#333] mt-12">
+        <div className="flex justify-center gap-4 mb-4 opacity-30">
+          <Settings size={18} />
+          <Lock size={18} />
+          <User size={18} />
+        </div>
+        <p className="text-[10px] text-[#555] tracking-[0.3em] uppercase">
+          Unauthorized access is strictly prohibited. © 2013 Semi Archive.
+        </p>
+        <p className="text-xs italic text-[#3e3e3e] mt-4">
+          "정숙함이라는 이름의 가면을 쓰고, 오늘도 나는 가장 깊은 곳의 나를 기록한다."
+        </p>
+      </footer>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;700&family=JetBrains+Mono:wght@300&display=swap');
+        
+        body {
+          background-color: #1a1a1a;
+        }
+
+        .font-serif {
+          font-family: 'Noto Serif KR', serif;
+        }
+        
+        .font-mono {
+          font-family: 'JetBrains Mono', monospace;
+        }
+
+        .markdown-content blockquote {
+          border-left: 3px solid #a68d7a;
+          padding-left: 1.5rem;
+          margin: 2rem 0;
+          color: #888;
+          font-style: italic;
+          background: rgba(166, 141, 122, 0.05);
+          padding-top: 1rem;
+          padding-bottom: 1rem;
+        }
+
+        .markdown-content h3 {
+          color: #a68d7a;
+          font-weight: 700;
+          letter-spacing: -0.05em;
+          margin-bottom: 1.5rem;
+          text-transform: uppercase;
+          font-size: 1.25rem;
+        }
+
+        .markdown-content p {
+          margin-bottom: 1.5rem;
+        }
+
+        .markdown-content ul {
+          list-style: none;
+          padding-left: 0;
+        }
+
+        .markdown-content li {
+          margin-bottom: 0.75rem;
+          position: relative;
+          padding-left: 1.5rem;
+        }
+
+        .markdown-content li::before {
+          content: '•';
+          color: #a68d7a;
+          position: absolute;
+          left: 0;
+        }
+
+        /* Dark Theme Scrollbar */
+        ::-webkit-scrollbar {
+          width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+          background: #111;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #333;
+          border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #a68d7a;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default App;
